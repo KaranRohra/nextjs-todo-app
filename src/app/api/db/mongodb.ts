@@ -1,7 +1,12 @@
-import { users } from '../mock/userData';
-import { User } from '../user/type';
+import { todo } from '../mock/todo';
+import { Todo } from '../todo/type';
 
+export const getTodo = (): Todo[] => {
+  return todo;
+};
 
-export const getUser = (): User[] => {
-  return users;
+export const createTodo = (newTodo: Todo): Todo => {
+  newTodo.id = (todo.length + 1).toString();
+  todo.push(newTodo);
+  return newTodo;
 };

@@ -1,28 +1,40 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getUser } from '../db/mongodb';
 import { StatusCodes } from 'http-status-codes';
-import { headers } from 'next/headers';
+import { NextRequest, NextResponse } from 'next/server';
+import { createTodo, getTodo } from '../db/mongodb';
+import { Todo, TodoStatus } from './type';
 
 export const GET = async (request: NextRequest) => {
-  let res, status;
-  const requestHeaders = headers();
-  const userId = requestHeaders.get('userId');
-  if (!userId) {
-    return NextResponse.json({ message: 'userId is missing in Headers' }, { status: StatusCodes.BAD_REQUEST });
-  }
-  const user = getUser().find((u) => u.id === userId);
-  if (user) {
-    status = StatusCodes.OK;
-    res = {
-      data: user.todo,
-      message: 'User found successfully',
-    };
-  } else {
-    status = StatusCodes.BAD_REQUEST;
-    res = {
-      message: 'User not found with userId: ' + userId,
-    };
+  const searchParams = request.nextUrl.searchParams;
+  const query = (searchParams.get('q') || '').toLowerCase();
+  const status = (searchParams.get('s') || '').toUpperCase();
+  const resTodo = getTodo().filter((todo) => {
+    return (todo.title.toLowerCase().includes(query) || todo.description.toLowerCase().includes(query)) && todo.status.includes(status);
+  });
+  return NextResponse.json(resTodo);
+};
+
+export const POST = async (request: NextRequest) => {
+  const newTodo: Todo = await request.json();
+  if (!newTodo.title || !newTodo.description) {
+    return NextResponse.json(
+      {
+        message: 'Required: title, description field',
+      },
+      { status: StatusCodes.BAD_REQUEST }
+    );
   }
 
-  return NextResponse.json(res, { status: status });
+  if (newTodo.dueDate) {
+    newTodo.dueDate = new Date(newTodo.dueDate);
+  }
+
+  newTodo.isFavorite = newTodo.isFavorite || false;
+  newTodo.status = newTodo.status || TodoStatus.PENDING;
+
+  return NextResponse.json(
+    createTodo(newTodo),
+    {
+      status: StatusCodes.CREATED,
+    }
+  );
 };
