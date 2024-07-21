@@ -31,10 +31,7 @@ export const POST = async (request: NextRequest) => {
   newTodo.isFavorite = newTodo.isFavorite || false;
   newTodo.status = newTodo.status || TodoStatus.PENDING;
 
-  return NextResponse.json(
-    createTodo(newTodo),
-    {
-      status: StatusCodes.CREATED,
-    }
-  );
+  return NextResponse.json(createTodo(newTodo), {
+    status: StatusCodes.CREATED,
+  });
 };
